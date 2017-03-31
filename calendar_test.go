@@ -2,9 +2,13 @@ package calendarservice
 
 import "testing"
 import "fmt"
+import "os"
+
+var calendar = Calendar{ID: os.Getenv("CALENDAR_ID"), Name: "test"}
 
 func TestEventsByWeeks(t *testing.T) {
-	eventsByWeeks := EventsByWeeks()
+	calendar.Update()
+	eventsByWeeks := calendar.EventsByWeeks()
 	for i, weeklyEvents := range eventsByWeeks {
 		fmt.Printf("WEEK %d\n", i)
 		for _, event := range weeklyEvents {
@@ -14,7 +18,7 @@ func TestEventsByWeeks(t *testing.T) {
 }
 
 func TestEventByWeekdayName(t *testing.T) {
-	eventsByWeeks := EventsByWeeks()
+	eventsByWeeks := calendar.EventsByWeeks()
 	for i, weeklyEvents := range eventsByWeeks {
 		fmt.Printf("WEEK %d\n", i)
 		fmt.Printf("\tFRIDAY:\t\t%s\n", weeklyEvents.EventByWeekdayName("friday").Summary)
