@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
@@ -13,20 +12,6 @@ import (
 type rawCalendarData struct {
 	ETag  string     `json:"etag"`
 	Items []rawEvent `json:"items"`
-}
-
-func (this rawCalendarData) getFormattedEvents() []Event {
-	rawEvents := this.Items
-	events := make([]Event, len(rawEvents))
-	for i, rawEvent := range rawEvents {
-		start, _ := rawEvent.Start.parse()
-		end, _ := rawEvent.End.parse()
-		events[i] = Event{GoogleID: rawEvent.ID, Summary: rawEvent.Summary, Description: rawEvent.Description, Start: start, End: end}
-	}
-	sort.Slice(events, func(i, j int) bool {
-		return events[i].Start.Unix() < events[j].Start.Unix()
-	})
-	return events
 }
 
 type rawEvent struct {
@@ -37,6 +22,12 @@ type rawEvent struct {
 	Description string  `json:"description"`
 	Start       rawDate `json:"start"`
 	End         rawDate `json:"end"`
+}
+
+func (this rawEvent) getFormattedEvent() Event {
+	start, _ := this.Start.parse()
+	end, _ := this.End.parse()
+	return Event{GoogleID: this.ID, Summary: this.Summary, Description: this.Description, Start: start, End: end}
 }
 
 type rawDate struct {
@@ -53,7 +44,7 @@ func (this rawDate) parse() (time.Time, error) {
 
 func fetchRawCalendarData(calendarID string) (rawCalendarData, error) {
 	timeMin := strings.Replace(time.Now().AddDate(0, 0, -14).Format(time.RFC3339), "+", "-", 1)
-	url := fmt.Sprintf("https://www.googleapis.com/calendar/v3/calendars/%s/events?key=%s&singleEvents=true&timeMin=%s", calendarID, os.Getenv("GOOGLE_API_KEY"), timeMin)
+	url := fmt.Sprintf("https://www.googleapis.com/calendar/v3/calendars/%s/events?key=%s&singleEvents=true&showDeleted=true&timeMin=%s", calendarID, os.Getenv("GOOGLE_API_KEY"), timeMin)
 
 	response, err := http.Get(url)
 	if err != nil {

@@ -25,3 +25,6 @@ func TestEventByWeekdayName(t *testing.T) {
 		fmt.Printf("\tSATURDAY:\t%s\n", weeklyEvents.EventByWeekdayName("saturday").Summary)
 	}
 }
+
+func TestCalendarUpdate(t *testing.T) {
+}

@@ -35,18 +35,23 @@ func (this Calendar) Update() {
 	if err != nil {
 		log(fmt.Sprintf("Failed to fetch '%s' data: %s\n", this.ID, err))
 	} else {
-		formattedEvents := rawData.getFormattedEvents()
-
 		addedEvents := 0
 		updatedEvents := 0
-		for _, event := range formattedEvents {
+		deletedEvents := 0
+		for _, rawEvent := range rawData.Items {
+			event := rawEvent.getFormattedEvent()
 			event.CalendarID = this.ID
 			event.CalendarName = this.Name
 			existing := Event{}
 			db.
 				Where("calendar_name = ? and google_id = ?", event.CalendarName, event.GoogleID).
 				First(&existing)
-			if existing.ID == 0 {
+			if rawEvent.Status == "cancelled" {
+				if existing.ID != 0 {
+					db.Unscoped().Delete(Event{}, "google_id = ?", rawEvent.ID)
+					deletedEvents++
+				}
+			} else if existing.ID == 0 {
 				db.Create(&event)
 				addedEvents++
 			} else {
@@ -54,7 +59,7 @@ func (this Calendar) Update() {
 				updatedEvents++
 			}
 		}
-		log(fmt.Sprintf("%s: %d events updated, %d events created.", this.ID, updatedEvents, addedEvents))
+		log(fmt.Sprintf("%s: %d events updated, %d events created, %d events deleted.", this.ID, updatedEvents, addedEvents, deletedEvents))
 	}
 }
 
@@ -81,5 +86,6 @@ func (this Calendar) EventsByWeeks() []WeeklyEvents {
 		}
 		events = append(events, event)
 	}
+	weeklyEvents = append(weeklyEvents, events)
 	return weeklyEvents
 }
