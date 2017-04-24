@@ -2,7 +2,6 @@ package calendarservice
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -11,21 +10,25 @@ type Calendar struct {
 	ID   string
 }
 
-type WeeklyEvents []Event
+type WeeklyEvents map[int]Event
 
-func (weeklyEvents WeeklyEvents) EventByWeekdayName(weekday string) Event {
-	for _, event := range weeklyEvents {
-		if strings.ToLower(event.Start.Weekday().String()) == strings.ToLower(weekday) {
-			return event
-		}
+func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...int) []Event {
+	events := make([]Event, 0)
+	for _, weekday := range weekdays {
+		event := weeklyEvents[weekday]
+		events = append(events, event)
 	}
-	return Event{}
+	return events
 }
 
 func (this Calendar) StartUpdate() {
+	this.StartUpdateWithTime(time.Minute)
+}
+
+func (this Calendar) StartUpdateWithTime(duration time.Duration) {
 	for {
 		this.Update()
-		time.Sleep(time.Minute)
+		time.Sleep(duration)
 	}
 }
 
@@ -81,10 +84,10 @@ func (this Calendar) EventsByWeeks() []WeeklyEvents {
 			if events != nil {
 				weeklyEvents = append(weeklyEvents, events)
 			}
-			events = make(WeeklyEvents, 0)
+			events = WeeklyEvents{}
 			previousWeekNumber = weekNumber
 		}
-		events = append(events, event)
+		events[int(event.Start.Weekday())] = event
 	}
 	weeklyEvents = append(weeklyEvents, events)
 	return weeklyEvents

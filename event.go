@@ -20,3 +20,7 @@ type Event struct {
 func (this Event) IsPast() bool {
 	return this.End.Sub(time.Now()) < 0
 }
+
+func (this Event) IsToday() bool {
+	return this.Start.Format("2/1/2006") == time.Now().Format("2/1/2006")
+}
