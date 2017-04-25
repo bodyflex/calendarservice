@@ -101,7 +101,7 @@ func (this Calendar) EventsByWeeks(startInterval string, endInterval string) []W
 
 	allEvents := []Event{}
 	db.
-		Where("start > date_trunc('week', now()) + ?::interval AND start < date_trunc('week', now()) + ?::interval AND calendar_name = ?", startInterval, endInterval, this.Name).
+		Where("start >= date_trunc('week', now()) + ?::interval AND start < date_trunc('week', now()) + ?::interval AND calendar_name = ?", startInterval, endInterval, this.Name).
 		Order("start asc").
 		Find(&allEvents)
 
