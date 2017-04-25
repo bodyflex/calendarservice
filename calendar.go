@@ -5,9 +5,21 @@ import (
 	"time"
 )
 
-type WeeklyEvents map[int]Event
+var week = time.Duration(int(time.Hour) * 24 * 7)
 
-func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...int) []Event {
+var weekdayIndexes = map[string]int{
+	"Monday":    0,
+	"Tuesday":   1,
+	"Wednesday": 2,
+	"Thursday":  3,
+	"Friday":    4,
+	"Saturday":  5,
+	"Sunday":    6,
+}
+
+type WeeklyEvents map[string]Event
+
+func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...string) []Event {
 	events := make([]Event, 0)
 	for _, weekday := range weekdays {
 		event := weeklyEvents[weekday]
@@ -19,6 +31,24 @@ func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...int) []Event {
 type Calendar struct {
 	Name string
 	ID   string
+}
+
+func (this Calendar) FilledCalendar(startWeekOffset int, endWeekOffset int, weekdays []string) [][]Event {
+	eventData := this.EventsByWeeks(fmt.Sprintf("%d week", startWeekOffset), fmt.Sprintf("%d week", endWeekOffset))
+	weeklyEvents := make([][]Event, 0)
+	for i := 0; i < endWeekOffset-startWeekOffset; i++ {
+		events := make([]Event, 0)
+		for _, weekday := range weekdays {
+			event, found := eventData[i][weekday]
+			if !found {
+				start := time.Now().Add(time.Duration((startWeekOffset + i) * int(week))).Truncate(week).Add(time.Duration(weekdayIndexes[weekday] * 24 * int(time.Hour)))
+				event = Event{Start: start}
+			}
+			events = append(events, event)
+		}
+		weeklyEvents = append(weeklyEvents, events)
+	}
+	return weeklyEvents
 }
 
 func (this Calendar) StartUpdate() {
@@ -66,12 +96,12 @@ func (this Calendar) Update() {
 	}
 }
 
-func (this Calendar) EventsByWeeks(weeks int) []WeeklyEvents {
+func (this Calendar) EventsByWeeks(startInterval string, endInterval string) []WeeklyEvents {
 	initDb()
 
 	allEvents := []Event{}
 	db.
-		Where("start > date_trunc('week', now()) AND end < date_trunc('week', now()) + interval '? week' AND calendar_name = ?", this.Name, weeks).
+		Where("start > date_trunc('week', now()) + ?::interval AND start < date_trunc('week', now()) + ?::interval AND calendar_name = ?", startInterval, endInterval, this.Name).
 		Order("start asc").
 		Find(&allEvents)
 
@@ -87,7 +117,7 @@ func (this Calendar) EventsByWeeks(weeks int) []WeeklyEvents {
 			weeklyEvents = WeeklyEvents{}
 			previousWeekNumber = weekNumber
 		}
-		weeklyEvents[int(event.Start.Weekday())] = event
+		weeklyEvents[event.Start.Weekday().String()] = event
 	}
 	weeklyEventsList = append(weeklyEventsList, weeklyEvents)
 	return weeklyEventsList
