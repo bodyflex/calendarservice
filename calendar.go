@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type Calendar struct {
-	Name string
-	ID   string
-}
-
 type WeeklyEvents map[int]Event
 
 func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...int) []Event {
@@ -19,6 +14,11 @@ func (weeklyEvents WeeklyEvents) EventsByWeekdays(weekdays ...int) []Event {
 		events = append(events, event)
 	}
 	return events
+}
+
+type Calendar struct {
+	Name string
+	ID   string
 }
 
 func (this Calendar) StartUpdate() {
@@ -66,29 +66,29 @@ func (this Calendar) Update() {
 	}
 }
 
-func (this Calendar) EventsByWeeks() []WeeklyEvents {
+func (this Calendar) EventsByWeeks(weeks int) []WeeklyEvents {
 	initDb()
 
 	allEvents := []Event{}
 	db.
-		Where("start > date_trunc('week', now()) and calendar_name = ?", this.Name).
+		Where("start > date_trunc('week', now()) AND end < date_trunc('week', now()) + interval '? week' AND calendar_name = ?", this.Name, weeks).
 		Order("start asc").
 		Find(&allEvents)
 
-	weeklyEvents := make([]WeeklyEvents, 0)
-	var events WeeklyEvents
+	weeklyEventsList := make([]WeeklyEvents, 0)
+	var weeklyEvents WeeklyEvents
 	var previousWeekNumber int
 	for _, event := range allEvents {
 		_, weekNumber := event.Start.ISOWeek()
 		if weekNumber != previousWeekNumber {
-			if events != nil {
-				weeklyEvents = append(weeklyEvents, events)
+			if weeklyEvents != nil {
+				weeklyEventsList = append(weeklyEventsList, weeklyEvents)
 			}
-			events = WeeklyEvents{}
+			weeklyEvents = WeeklyEvents{}
 			previousWeekNumber = weekNumber
 		}
-		events[int(event.Start.Weekday())] = event
+		weeklyEvents[int(event.Start.Weekday())] = event
 	}
-	weeklyEvents = append(weeklyEvents, events)
-	return weeklyEvents
+	weeklyEventsList = append(weeklyEventsList, weeklyEvents)
+	return weeklyEventsList
 }
