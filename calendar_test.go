@@ -1,14 +1,22 @@
 package calendarservice
 
-import "testing"
-
-import "os"
+import (
+	"fmt"
+	"os"
+	"testing"
+)
 
 var calendar = Calendar{ID: os.Getenv("CALENDAR_ID"), Name: "test"}
 
 func TestIterator(t *testing.T) {
 	calendar.Update()
-	calendar.FilledCalendar(0, 4, []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"})
+	items := calendar.FilledCalendar(0, 4, []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"})
+	for _, events := range items {
+		println("WEEK")
+		for _, event := range events {
+			fmt.Printf("EVENT: %s: %s\n", event.Start, event.Summary)
+		}
+	}
 }
 
 func TestEventsByWeeks(t *testing.T) {
