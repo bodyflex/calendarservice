@@ -39,7 +39,7 @@ func (this Calendar) FilledCalendar(startWeekOffset int, endWeekOffset int, week
 	for i := 0; i < endWeekOffset-startWeekOffset; i++ {
 		events := make([]Event, 0)
 		for _, weekday := range weekdays {
-			if len(eventData) < i {
+			if i < len(eventData)-1 {
 				event, found := eventData[i][weekday]
 				if !found {
 					start := time.Now().Add(time.Duration((startWeekOffset + i) * int(week))).Truncate(week).Add(time.Duration(weekdayIndexes[weekday] * 24 * int(time.Hour)))
