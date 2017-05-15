@@ -41,7 +41,7 @@ func (this Calendar) FilledCalendar(startWeekOffset int, endWeekOffset int, week
 		for _, weekday := range weekdays {
 			var event Event
 			found := true
-			if i < len(eventData)-1 {
+			if i < len(eventData) {
 				event, found = eventData[i][weekday]
 			} else {
 				found = false
